@@ -34,6 +34,14 @@ module tb_dot();
     wire                        OUTPUT_AXIS_TVALID;
     reg                         OUTPUT_AXIS_TREADY;
 
+    localparam ROWS = 3;
+    localparam COLS = 4;
+
+    localparam [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
+       '{$shortrealtobits(1.0),$shortrealtobits(2.0),$shortrealtobits(3.0),$shortrealtobits(4.0)},
+       '{$shortrealtobits(5.0),$shortrealtobits(6.0),$shortrealtobits(7.0),$shortrealtobits(8.0)},
+       '{$shortrealtobits(9.0),$shortrealtobits(10.0),$shortrealtobits(11.0),$shortrealtobits(12.0)}
+    };
 
     //used to access the FP tests table    
     bit [31:0] fp_hex;
@@ -44,6 +52,8 @@ module tb_dot();
         .clk, 
         .rst, 
 
+        .weights(weights),
+        
         .INPUT_AXIS_TDATA,
         .INPUT_AXIS_TLAST,
         .INPUT_AXIS_TVALID,

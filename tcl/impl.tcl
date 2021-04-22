@@ -9,7 +9,9 @@ if { $argc != 2 } {
     puts [ concat "NUM_CORES: " $NUM_CORES]
 
     open_project ${BASE_PATH}/vivado_project/vivado_project.xpr
-    launch_runs impl_1 -to_step write_bitstream -jobs ${NUM_CORES}
+    #launch_runs impl_1 -to_step write_bitstream -jobs ${NUM_CORES}
+    #wait_on_run impl_1 
+    launch_runs impl_1 -jobs ${NUM_CORES}
     wait_on_run impl_1 
 }
 

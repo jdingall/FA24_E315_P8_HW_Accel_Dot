@@ -15,32 +15,9 @@
 
 module dot #(   
 
-    //Python3
-    //    import numpy as np
-    //    import struct
-        
-    //    weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12]], dtype=np.float32)
-    //    inputs = np.array([[0.1,0.2,0.3]], dtype=np.float32)
-    //    outs = np.dot(inputs, weights)
-    //    print ('='*80 + '\n Used in dot.sv \n' + '='*80)
-    //    print ('parameter ROWS = %d,' %weights.shape[0])
-    //    print ('parameter COLS = %d,' %weights.shape[1])
-    //    print ()
-    //    print ('parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = \'{')
-    //    for i in range(weights.shape[0]):
-    //        flts_hex = map( lambda x: '$shortrealtobits(' + str(x) + ')', weights[i])
-    //        print ('\t\'{' + ','.join(flts_hex)  + '}', end='')
-    //        print (',' if i < weights.shape[0]-1 else '')
-    //    print ('}')
-
 parameter ROWS = 3,
-parameter COLS = 4,
+parameter COLS = 4
 
-parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
-	'{$shortrealtobits(1.0),$shortrealtobits(2.0),$shortrealtobits(3.0),$shortrealtobits(4.0)},
-	'{$shortrealtobits(5.0),$shortrealtobits(6.0),$shortrealtobits(7.0),$shortrealtobits(8.0)},
-	'{$shortrealtobits(9.0),$shortrealtobits(10.0),$shortrealtobits(11.0),$shortrealtobits(12.0)}
-}
      
     )(
 
@@ -48,11 +25,15 @@ parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
     input clk, 
     input rst, 
 
+
     // Incomming Matrix AXI4-Stream
     input [31:0]                    INPUT_AXIS_TDATA,
     input                           INPUT_AXIS_TLAST,
     input                           INPUT_AXIS_TVALID,
     output reg                      INPUT_AXIS_TREADY,
+
+    //weight matrix
+    input [31:0]                    weights [0:ROWS-1] [0:COLS-1], 
     
     // Outgoing Vector AXI4-Stream 		
     output reg [31:0]               OUTPUT_AXIS_TDATA,
@@ -128,8 +109,8 @@ parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
     reg [TIMER_SZ-1:0] fpu_timer, next_fpu_timer; 
 
     // STATES
-    enum { ST_IDLE, ST_RUN_FMAC, ST_WAIT_FMAC, ST_STEP_ROW, 
-                    ST_TERM_ROW, ST_OUTPUT } state, next_state;
+    enum { ST_IDLE, ST_START_ROW, ST_STEP_ROW, ST_TERM_ROW, 
+           ST_RX_WAIT, ST_OUTPUT } state, next_state;
 
     //sequential block
     always_ff@(posedge clk) begin
@@ -182,56 +163,65 @@ parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
                     next_j = 0;
                     next_inbuf = INPUT_AXIS_TDATA;
                     
-                    next_state = ST_RUN_FMAC;
+                    next_state = ST_START_ROW;
                 end
                 
             end
            
-            ST_RUN_FMAC: begin
+            //could be combined with ST_STEP_ROW
+            ST_START_ROW: begin
                 //timer for when the first results are back
                 next_fpu_timer = FMAC_DELAY;
                 run_fmac = 'h1;
-                next_state = ST_WAIT_FMAC; 
-            end
-
-            ST_WAIT_FMAC: begin
-                if (fpu_timer == 0) begin
-                    if (j == COLS - 1) 
-                        next_state = ST_TERM_ROW;
-                    else begin
-                        next_state = ST_STEP_ROW;     
-                    end
+                if (j == COLS - 1)
+                    next_state = ST_TERM_ROW; 
+                else begin
+                    next_j = j + 1;
+                    next_state = ST_STEP_ROW;
                 end
             end
 
             ST_STEP_ROW:  begin
-                next_j = j + 1;
-                next_state = ST_RUN_FMAC;
+                run_fmac = 'h1;
+                
+                if (j == COLS - 1) begin
+                    next_state = ST_TERM_ROW;
+                end else begin
+                    next_j = j + 1;
+                end
             end
 
-            ST_TERM_ROW: begin
+            ST_TERM_ROW:
             
-                //jump to the next row
-                if (i < ROWS - 1) begin
+                //only proceed to next row if FPU has returned 1st results
+                if (fpu_timer == 0) begin                                     
                 
-                    INPUT_AXIS_TREADY = 'h1;
+                    //jump to the next row
+                    if (i < ROWS - 1) begin
                     
-                    if (INPUT_AXIS_TVALID) begin
-                                                                        
-                        next_i = i + 1;
-                        next_j = 0;
+                        INPUT_AXIS_TREADY = 'h1;
                         
-                        next_inbuf = INPUT_AXIS_TDATA;
-                        next_state = ST_RUN_FMAC;
+                        if (INPUT_AXIS_TVALID) begin
+                                                                            
+                            next_i = i + 1;
+                            next_j = 0;
+                            
+                            next_inbuf = INPUT_AXIS_TDATA;
+                            next_state = ST_START_ROW;
+                        end
+                    
+                    end else begin
+                        next_i = 0;
+                        next_j = 0;
+                        next_state = ST_RX_WAIT;
                     end
-                
-                end else begin
-                    next_i = 0;
-                    next_j = 0;
-                    next_state = ST_OUTPUT; 
-                end
              end                         
-            
+             
+             ST_RX_WAIT: begin
+                if (rx_done)
+                    next_state = ST_OUTPUT;
+             end
+
              ST_OUTPUT: begin
                 OUTPUT_AXIS_TVALID = 'h1;
                 OUTPUT_AXIS_TLAST = (j == COLS - 1 ? 1'h1 : 1'h0);

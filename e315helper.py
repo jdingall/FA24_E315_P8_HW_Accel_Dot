@@ -52,7 +52,7 @@ class Helper():
             print ("Found Vivado Project, Skipping.")
             return
 
-        command = 'vivado -mode batch -source ' + self.J['Proj'] + '.tcl'
+        command = 'vivado -mode batch -source tcl/setup.tcl' 
         fixup = 'vivado -mode batch -source tcl/fixup.tcl'
 
         if self.vivado != None:
