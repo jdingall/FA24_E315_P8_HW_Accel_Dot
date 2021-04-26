@@ -44,8 +44,8 @@ module accel_dot #(
     if (( COLS % 2) != 0)
         $error("COLS must be even"); 
 
-    wire [31:0] weights0 [0:ROWS][0 :+ COLS/2-1];
-    wire [31:0] weights1 [0:ROWS][0 :+ COLS/2-1];
+    wire [31:0] weights0 [0:ROWS-1][0 :+ COLS/2-1];
+    wire [31:0] weights1 [0:ROWS-1][0 :+ COLS/2-1];
     
     //if you want to cut the weights in half vertically
     genvar i;
