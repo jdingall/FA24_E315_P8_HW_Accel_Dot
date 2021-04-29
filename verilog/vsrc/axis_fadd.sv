@@ -35,7 +35,9 @@ module axis_fadd(
         output          B_TREADY, 
 
         output [31:0]   OUT_TDATA,
-        output          OUT_TVALID
+        output          OUT_TLAST,
+        output          OUT_TVALID,
+        input           OUT_TREADY
     );
     
 
