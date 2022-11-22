@@ -37,7 +37,7 @@ module dot_20_10(
 localparam ROWS = 20;
 localparam COLS = 10;
 
-localparam [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
+localparam logic [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
   '{
     $shortrealtobits(0.025832674),$shortrealtobits(0.031067913),$shortrealtobits(0.074954145),$shortrealtobits(0.069431275),
     $shortrealtobits(0.027941115),$shortrealtobits(-0.38890076),$shortrealtobits(0.033413205),$shortrealtobits(0.023418507),

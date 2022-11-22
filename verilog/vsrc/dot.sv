@@ -18,48 +18,46 @@ module dot #(
 parameter ROWS = 3,
 parameter COLS = 4
 
-     
     )(
 
 
     input clk, 
     input rst, 
 
-
     // Incomming Matrix AXI4-Stream
     input [31:0]                    INPUT_AXIS_TDATA,
     input                           INPUT_AXIS_TLAST,
     input                           INPUT_AXIS_TVALID,
-    output reg                      INPUT_AXIS_TREADY,
+    output logic                    INPUT_AXIS_TREADY,
 
     //weight matrix
     input [31:0]                    weights [0:ROWS-1] [0:COLS-1], 
     
     // Outgoing Vector AXI4-Stream 		
-    output reg [31:0]               OUTPUT_AXIS_TDATA,
-    output reg                      OUTPUT_AXIS_TLAST,
-    output reg                      OUTPUT_AXIS_TVALID,
+    output logic [31:0]             OUTPUT_AXIS_TDATA,
+    output logic                    OUTPUT_AXIS_TLAST,
+    output logic                    OUTPUT_AXIS_TVALID,
     input                           OUTPUT_AXIS_TREADY
 
     );  
 
     //output vector array (also used for dot calculations)
-    reg [31:0] outputs [0:COLS-1];       
+    logic [31:0] outputs [0:COLS-1];       
     //bulk clear the entire output array 
-    reg clear_outputs;
+    logic clear_outputs;
 
     //buffer for the most recient input
-    reg [31:0] inbuf, next_inbuf;     
+    logic [31:0] inbuf, next_inbuf;     
 
     //ask for the Floating-Point Multiply-Accumulate module to be run
-    reg run_fmac;
+    logic run_fmac;
 
     //tracks the row/column location of weight matrix values headed to the fmac
-    reg [31:0]  i, next_i;
-    reg [31:0]  j, next_j;
+    logic [31:0]  i, next_i;
+    logic [31:0]  j, next_j;
 
     //tracks the row/column local of returning fmac values 
-    reg [31:0] rxi, rxj;
+    logic [31:0] rxi, rxj;
     
     //signal when the last values has been recieved from the fmac
     wire rx_done;
@@ -106,11 +104,11 @@ parameter COLS = 4
     localparam FMAC_DELAY = 8; 
     //a timer to track the FPU delays
     localparam TIMER_SZ = $clog2(FMAC_DELAY + 1);
-    reg [TIMER_SZ-1:0] fpu_timer, next_fpu_timer; 
+    logic [TIMER_SZ-1:0] fpu_timer, next_fpu_timer; 
 
     // STATES
-    enum { ST_IDLE, ST_START_ROW, ST_STEP_ROW, ST_TERM_ROW, 
-           ST_RX_WAIT, ST_OUTPUT } state, next_state;
+    enum { ST_IDLE, ST_RUN_FMAC, ST_WAIT_FMAC, ST_STEP_ROW, 
+                    ST_TERM_ROW, ST_OUTPUT } state, next_state;
 
     //sequential block
     always_ff@(posedge clk) begin
@@ -163,65 +161,58 @@ parameter COLS = 4
                     next_j = 0;
                     next_inbuf = INPUT_AXIS_TDATA;
                     
-                    next_state = ST_START_ROW;
+                    next_state = ST_RUN_FMAC;
                 end
                 
             end
            
-            //could be combined with ST_STEP_ROW
-            ST_START_ROW: begin
+            ST_RUN_FMAC: begin
                 //timer for when the first results are back
                 next_fpu_timer = FMAC_DELAY;
                 run_fmac = 'h1;
-                if (j == COLS - 1)
-                    next_state = ST_TERM_ROW; 
-                else begin
-                    next_j = j + 1;
-                    next_state = ST_STEP_ROW;
+                next_state = ST_WAIT_FMAC; 
+            end
+
+            ST_WAIT_FMAC: begin
+                if (fpu_timer == 0) begin
+                    // end of a row? 
+                    if (j == COLS - 1) 
+                        next_state = ST_TERM_ROW;
+                    // go on to the next value in the row
+                    else begin
+                        next_state = ST_STEP_ROW;     
+                    end
                 end
             end
 
             ST_STEP_ROW:  begin
-                run_fmac = 'h1;
-                
-                if (j == COLS - 1) begin
-                    next_state = ST_TERM_ROW;
-                end else begin
-                    next_j = j + 1;
-                end
+                next_j = j + 1;
+                next_state = ST_RUN_FMAC;
             end
 
-            ST_TERM_ROW:
+            ST_TERM_ROW: begin
             
-                //only proceed to next row if FPU has returned 1st results
-                if (fpu_timer == 0) begin                                     
+                //start on the next row
+                if (i < ROWS - 1) begin
                 
-                    //jump to the next row
-                    if (i < ROWS - 1) begin
+                    INPUT_AXIS_TREADY = 'h1;
                     
-                        INPUT_AXIS_TREADY = 'h1;
-                        
-                        if (INPUT_AXIS_TVALID) begin
-                                                                            
-                            next_i = i + 1;
-                            next_j = 0;
-                            
-                            next_inbuf = INPUT_AXIS_TDATA;
-                            next_state = ST_START_ROW;
-                        end
-                    
-                    end else begin
-                        next_i = 0;
+                    if (INPUT_AXIS_TVALID) begin
+                                                                        
+                        next_i = i + 1;
                         next_j = 0;
-                        next_state = ST_RX_WAIT;
+                        
+                        next_inbuf = INPUT_AXIS_TDATA;
+                        next_state = ST_RUN_FMAC;
                     end
+                //done with inputs, start sending out outputs
+                end else begin
+                    next_i = 0;
+                    next_j = 0;
+                    next_state = ST_OUTPUT; 
+                end
              end                         
-             
-             ST_RX_WAIT: begin
-                if (rx_done)
-                    next_state = ST_OUTPUT;
-             end
-
+            
              ST_OUTPUT: begin
                 OUTPUT_AXIS_TVALID = 'h1;
                 OUTPUT_AXIS_TLAST = (j == COLS - 1 ? 1'h1 : 1'h0);
@@ -245,12 +236,11 @@ parameter COLS = 4
     end
 
 
-    /////////////////////////////////////////////
-    //
-    // Recv from FMAC Control 
-    //
-    /////////////////////////////////////////////
-
+/////////////////////////////////////////////
+//
+// Recv from FMAC Control 
+//
+/////////////////////////////////////////////
 
 always_ff@(posedge clk) begin
     

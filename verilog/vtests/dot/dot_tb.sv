@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module tb_dot();
+module dot_tb();
 
     integer                     i;
     
@@ -32,7 +32,7 @@ module tb_dot();
     wire [31:0]                 OUTPUT_AXIS_TDATA;
     wire                        OUTPUT_AXIS_TLAST;
     wire                        OUTPUT_AXIS_TVALID;
-    reg                         OUTPUT_AXIS_TREADY;
+    logic                       OUTPUT_AXIS_TREADY;
 
     localparam ROWS = 3;
     localparam COLS = 4;
@@ -42,6 +42,8 @@ module tb_dot();
        '{$shortrealtobits(5.0),$shortrealtobits(6.0),$shortrealtobits(7.0),$shortrealtobits(8.0)},
        '{$shortrealtobits(9.0),$shortrealtobits(10.0),$shortrealtobits(11.0),$shortrealtobits(12.0)}
     };
+
+
 
     //used to access the FP tests table    
     bit [31:0] fp_hex;
@@ -53,7 +55,7 @@ module tb_dot();
         .rst, 
 
         .weights(weights),
-        
+
         .INPUT_AXIS_TDATA,
         .INPUT_AXIS_TLAST,
         .INPUT_AXIS_TVALID,
@@ -68,29 +70,13 @@ module tb_dot();
 
 
     always #10 clk <= ~clk;
-    
-//     Python3
-//     import numpy as np
-    
-//    weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12]], dtype=np.float32)
-//    inputs = np.array([[0.1,0.2,0.3]], dtype=np.float32)
-//    outs = np.dot(inputs, weights)
-    
-//    flts = inputs[0]
-//    flts_bits = list(map( lambda x: '$shortrealtobits(' + str(x) + ')', flts))
-//    offset=4
-//    print ('static bit [31:0] fpHex [0:' + str(len(flts)-1) + '] = {')
-//    for i in range(0, len(flts), offset):
-//        print (' ' + ', '.join(flts_bits[i:i+offset] ), end='')
-//        print (',' if i < len(flts) - offset else ' ')
-//    print ('};')
-//    print ('static int MAX_SIZE = %d;' % len(flts))
-
+   
+    // see python/dot.py for values
     task inputs_table_lookup(
         input integer id,
         output bit [31:0] hex
         );
-        
+
         static bit [31:0] fpHex [0:2] = {
             $shortrealtobits(0.1),
             $shortrealtobits(0.2),
@@ -102,27 +88,11 @@ module tb_dot();
         hex = fpHex[id];
     endtask : inputs_table_lookup  
     
-//    Python3
-//    import numpy as np
-    
-//    weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12]], dtype=np.float32)
-//    inputs = np.array([[0.1,0.2,0.3]], dtype=np.float32)
-//    outs = np.dot(inputs, weights)
-    
-//    flts = outs[0]
-//    flts_bits = list(map( lambda x: '$shortrealtobits(' + str(x) + ')', flts))
-//    offset=4
-//    print ('static bit [31:0] fpHex [0:' + str(len(flts)-1) + '] = {')
-//    for i in range(0, len(flts), offset):
-//        print (' ' + ', '.join(flts_bits[i:i+offset] ), end='')
-//        print (',' if i < len(flts) - offset else ' ')
-//    print ('};')
-//    print ('static int MAX_SIZE = %d;' % len(flts))    
+    // see python/dot.py for values
     task outputs_table_lookup(
         input integer id,
         output bit [31:0] hex
         );
-
         static bit [31:0] fpHex [0:3] = {
             $shortrealtobits(3.8000002), $shortrealtobits(4.4), $shortrealtobits(5.0), $shortrealtobits(5.6000004)
         };
@@ -184,11 +154,61 @@ module tb_dot();
        i = 0;
     endtask
 
+    task compute();
+        $display("Sending Input Vector");                
+        for (i = 0; i < 3; ++i) begin
+            inputs_table_lookup(i, fp_hex);
+            $display( "Sending %h (%f)", fp_hex, $bitstoshortreal(fp_hex) ); 
+            send_word_axi4stream(fp_hex, i == 19);
+        end                
+              
+        $display("Receiving Output Vector");
+        for (i = 0; i < 4; ++i) begin
+            real mismatch; 
+            
+            outputs_table_lookup(i, sol_hex);
+            
+            recv_word_axi4stream(fp_hex);
+            
+            $display( "Received %h (%f)",
+                fp_hex, $bitstoshortreal(fp_hex));
+                
+            //compute the difference between what was observed and what was
+            // expected with Python
+            mismatch = $bitstoshortreal(fp_hex) - $bitstoshortreal(sol_hex);
+            $display("mismatch: %f", mismatch);
+            
+            assert( (mismatch > -0.000001) && (mismatch < +0.000001) ) else
+                $fatal(1, "Bad Test Response %h (%f), Expected %h (%f) mismatch:%f", 
+                    fp_hex, $bitstoshortreal(fp_hex), sol_hex, $bitstoshortreal(sol_hex), mismatch); 
+            
+        end
+    endtask
+    
+    task timeit (
+        output int cycles
+        );
+        
+        cycles = 0;
+        while ( ! (
+            (OUTPUT_AXIS_TREADY === 'h1) && 
+            (OUTPUT_AXIS_TVALID === 'h1) && 
+            (OUTPUT_AXIS_TLAST === 'h1) ) ) begin
+            cycles += 1;
+            
+            @(posedge clk);
+            
+            assert (cycles < 4410) else 
+                $fatal(1, "Running too long, check OUTPUT_AXIS?");
+        end
+                        
+    endtask
        
 
     //Main process
     initial begin
  
+        int cycles;
         
         $timeformat (-12, 1, " ps", 1);      
 
@@ -205,32 +225,12 @@ module tb_dot();
         
         $display("Starting Simulation"); 
 
-                                
-        $display("Sending Input Vector");                
-        for (i = 0; i < 3; ++i) begin
-            inputs_table_lookup(i, fp_hex);
-            $display( "Sending %h (%f)", fp_hex, $bitstoshortreal(fp_hex) ); 
-            send_word_axi4stream(fp_hex, i == 2);
-        end                
-              
-        $display("Receiving Output Vector");
-        for (i = 0; i < 4; ++i) begin
-            outputs_table_lookup(i, sol_hex);
-            
-            recv_word_axi4stream(fp_hex);
-            
-            $display( "Received %h (%f)",
-                fp_hex, $bitstoshortreal(fp_hex)); 
-            assert( fp_hex == sol_hex ) else
-                $fatal(1, "Bad Test Response %h (%f), Expected %h (%f)", 
-                    fp_hex, $bitstoshortreal(fp_hex), sol_hex, $bitstoshortreal(sol_hex)); 
-            
-        end
+        fork
+            compute();
+            timeit(cycles);
+        join                                                  
         
-        repeat(20) @(negedge clk);     
-        
-        $display("@@@Passed");
-        
+        $display("@@@Passed in %d Cycles (was 137)", cycles);
         $finish;
 
     end
