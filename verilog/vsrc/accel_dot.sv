@@ -27,15 +27,15 @@ module accel_dot #(
     input [31:0]                    INPUT_AXIS_TDATA,
     input                           INPUT_AXIS_TLAST,
     input                           INPUT_AXIS_TVALID,
-    output reg                      INPUT_AXIS_TREADY,
+    output logic                    INPUT_AXIS_TREADY,
 
     //the weight matrix
-    input [31:0]                    weights [0:ROWS-1] [0:COLS-1],
+    input logic [31:0]               weights [0:ROWS-1] [0:COLS-1],
     
     // Outgoing Vector AXI4-Stream 		
-    output reg [31:0]               OUTPUT_AXIS_TDATA,
-    output reg                      OUTPUT_AXIS_TLAST,
-    output reg                      OUTPUT_AXIS_TVALID,
+    output logic [31:0]             OUTPUT_AXIS_TDATA,
+    output logic                    OUTPUT_AXIS_TLAST,
+    output logic                    OUTPUT_AXIS_TVALID,
     input                           OUTPUT_AXIS_TREADY
 
     );  
