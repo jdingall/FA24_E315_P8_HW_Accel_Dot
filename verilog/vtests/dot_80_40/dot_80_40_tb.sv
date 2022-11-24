@@ -256,7 +256,7 @@ module dot_80_40_tb();
             timeit(cycles);
         join                                                  
         
-        $display("@@@Passed in %d Cycles (was 8821)", cycles);
+        $display("@@@Passed in %d Cycles (was 35241)", cycles);
         $finish;
 
     end
