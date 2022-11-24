@@ -8,12 +8,14 @@ set TESTDIR ${MYDIR}/../verilog/vtests/
 create_project -force vivado_project.xpr ${BASEDIR}/vivado_project -part xc7z020clg400-1
 
 # add source files
+add_files ${SRCDIR}/axis_dot_80_40.v
 add_files ${SRCDIR}/axis_dot_40_20.v
 add_files ${SRCDIR}/axis_dot_20_10.v
-add_files ${SRCDIR}/dot_40_20.sv
-add_files ${SRCDIR}/dot_20_10.sv
 add_files ${SRCDIR}/accel_dot.sv
 add_files ${SRCDIR}/dot.sv
+add_files ${SRCDIR}/dot_20_10.sv
+add_files ${SRCDIR}/dot_40_20.sv
+add_files ${SRCDIR}/dot_80_40.sv
 add_files ${SRCDIR}/axis_fmac.sv
 add_files ${SRCDIR}/axis_fadd.sv
 
@@ -46,6 +48,9 @@ create_fileset -simset sim_dot_40_20
 add_files -fileset sim_dot_40_20 ${TESTDIR}/dot_40_20/dot_40_20_tb.sv
 set_property top dot_40_20_tb [get_filesets sim_dot_40_20]
 
+create_fileset -simset sim_dot_80_40
+add_files -fileset sim_dot_80_40 ${TESTDIR}/dot_80_40/dot_80_40_tb.sv
+set_property top dot_80_40_tb [get_filesets sim_dot_80_40]
 
 # set *.sv to SystemVerilog
 set_property file_type SystemVerilog [get_files *.sv]
