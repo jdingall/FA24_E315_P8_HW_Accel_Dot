@@ -54,8 +54,10 @@ module accel_dot #(
         assign weights1[i] = weights[i][COLS/2  : COLS-1    ];
     end
    
-    //if you want to cut the weights in half horizontally
-    // This does every-other row horizontally
+    ////if you want to cut the weights in half horizontally
+    //wire [31:0] weights0 [0:ROWS/2-1][0 :+ COLS-1];
+    //wire [31:0] weights1 [0:ROWS/2-1][0 :+ COLS-1];
+    ////This does every-other row horizontally
     //genvar i;
     //for (i = 0; i < ROWS/2; ++i) begin
     //    assign weights0[i] = weights[i*2];
