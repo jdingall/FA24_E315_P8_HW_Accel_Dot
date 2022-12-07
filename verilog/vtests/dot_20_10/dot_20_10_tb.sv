@@ -180,19 +180,26 @@ module dot_20_10_tb();
             
         end
     endtask
-    
+
     task timeit (
         output int cycles
         );
         
         cycles = 0;
-        while (OUTPUT_AXIS_TLAST == 'h0) begin
+        while ( ! (
+            (OUTPUT_AXIS_TREADY === 'h1) && 
+            (OUTPUT_AXIS_TVALID === 'h1) && 
+            (OUTPUT_AXIS_TLAST === 'h1) ) ) begin
             cycles += 1;
-            @(negedge clk);
+            
+            @(posedge clk);
+            
+            assert (cycles < 44100) else 
+                $fatal(1, "Running too long, check OUTPUT_AXIS?");
         end
-                
+                        
     endtask
-       
+    
 
     //Main process
     initial begin
