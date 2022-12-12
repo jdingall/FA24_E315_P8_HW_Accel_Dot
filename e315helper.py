@@ -157,15 +157,20 @@ class Helper():
         for command in commands:                     
             self.run_command(command)
 
-    def load_bitstream(self):
-        bit =  self.MY_DIR + '/vivado_project/vivado_project.runs/impl_1/' + self.J['fpga_design'] + '_wrapper.bit'
+    def load_bitstream(self, path = ''):
+        if path == '':
+            bit =  self.MY_DIR + '/vivado_project/vivado_project.runs/impl_1/' + self.J['fpga_design'] + '_wrapper.bit'
 
-        hwh = self.MY_DIR + '/vivado_project/vivado_project.gen/sources_1/bd/'+self.J['fpga_design']+'/hw_handoff/' + \
-                            self.J['fpga_design']+'.hwh'
+            hwh = self.MY_DIR + '/vivado_project/vivado_project.gen/sources_1/bd/'+self.J['fpga_design']+'/hw_handoff/' + \
+                                self.J['fpga_design']+'.hwh'
 
-        if not os.path.exists( hwh):
-            logging.info('trying alternate hwh file path')
-            hwh = self.MY_DIR + '/verilog/vsrc/'+ self.J['fpga_design'] + '/hw_handoff/' + self.J['fpga_design'] + '.hwh'
+            if not os.path.exists( hwh):
+                logging.info('trying alternate hwh file path')
+                hwh = self.MY_DIR + '/verilog/vsrc/'+ self.J['fpga_design'] + '/hw_handoff/' + self.J['fpga_design'] + '.hwh'
+        else: 
+            assert (os.path.exists(path))
+            bit = path
+            hwh = path.replace('bin', 'hwh')
 
         scp = 'scp -i ' + self.priv_key
         pynq = 'xilinx@'+self.J['IP'] + ':~/jupyter_notebooks/' + self.J['Proj'] + '/Pynq/'
@@ -253,6 +258,8 @@ class Parser():
 
         bitstream_ap= sap.add_parser('bitstream', help='write the bitstream to the Pynq')
         bitstream_ap.add_argument('--ip', type=str, nargs='?', help="Ip Address of Pynq")
+        bitstream_ap.add_argument('--path', type=str, nargs='?', default='',
+            help="Path to the bitstream") 
 
         update_ap= sap.add_parser('update', help='update from git') 
 
@@ -316,7 +323,11 @@ class Parser():
         h = Helper()
         if args.ip:
             h.set_ip(args.ip)
-        h.load_bitstream()
+
+        if args.path: path = args.path
+        else: path = ''
+
+        h.load_bitstream( path )
 
     def update(self, args):
         print('Running update')
