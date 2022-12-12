@@ -170,7 +170,7 @@ class Helper():
         else: 
             assert (os.path.exists(path))
             bit = path
-            hwh = path.replace('bin', 'hwh')
+            hwh = path.replace('bit', 'hwh')
 
         scp = 'scp -i ' + self.priv_key
         pynq = 'xilinx@'+self.J['IP'] + ':~/jupyter_notebooks/' + self.J['Proj'] + '/Pynq/'
