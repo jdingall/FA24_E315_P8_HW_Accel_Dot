@@ -58,8 +58,9 @@ print ('='*80 + '\n Used in dot_4_4_tb.sv \n' + '='*80)
 
 import numpy as np
 
-weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12]], dtype=np.float32)
-inputs = np.array([[0.1,0.2,0.3]], dtype=np.float32)
+
+weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]], dtype=np.float32)
+inputs = np.array([[0.1,0.2,0.3,0.4]], dtype=np.float32)
 outs = np.dot(inputs, weights)
 
 flts = inputs[0]
@@ -73,12 +74,12 @@ print ('};')
 print ('static int MAX_SIZE = %d;' % len(flts))  
 
 
-print ('='*80 + '\n Used in dot_tb.sv \n' + '='*80)
+print ('='*80 + '\n Used in dot_4_4_tb.sv \n' + '='*80)
 
 import numpy as np
 
-weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12]], dtype=np.float32)
-inputs = np.array([[0.1,0.2,0.3]], dtype=np.float32)
+weights = np.array( [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]], dtype=np.float32)
+inputs = np.array([[0.1,0.2,0.3,0.4]], dtype=np.float32)
 outs = np.dot(inputs, weights)
 
 flts = outs[0]

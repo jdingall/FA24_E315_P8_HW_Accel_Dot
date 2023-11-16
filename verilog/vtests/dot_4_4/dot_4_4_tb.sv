@@ -65,10 +65,9 @@ module dot_4_4_tb();
         );
 
         static bit [31:0] fpHex [0:3] = {
-          $shortrealtobits(0.1), $shortrealtobits(0.2), $shortrealtobits(0.3), $shortrealtobits(0.4) 
+         $shortrealtobits(0.1), $shortrealtobits(0.2), $shortrealtobits(0.3), $shortrealtobits(0.4) 
         };
-
-        static int MAX_SIZE = 4;;
+        static int MAX_SIZE = 4;
 
         assert(id < MAX_SIZE) else $fatal(1, "Bad id");
         hex = fpHex[id];
@@ -80,11 +79,10 @@ module dot_4_4_tb();
         output bit [31:0] hex
         );
 
-        static bit [31:0] fpHex [0:9] = {
-          $shortrealtobits(3.8000002), $shortrealtobits(4.4), $shortrealtobits(5.0), $shortrealtobits(5.6000004) 
+        static bit [31:0] fpHex [0:3] = {
+          $shortrealtobits(9.0), $shortrealtobits(10.0), $shortrealtobits(11.0), $shortrealtobits(12.0) 
         };
-        static int MAX_SIZE = 10;
-
+        static int MAX_SIZE = 4;
                 
         assert(id <MAX_SIZE) else $fatal(1, "Bad id");
         hex = fpHex[id];
