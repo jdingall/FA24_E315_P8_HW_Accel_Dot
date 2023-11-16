@@ -72,6 +72,7 @@ current_fileset -simset [ get_filesets sim_accel_dot ]
 set_property -name {xsim.simulate.runtime} -value {1000us} -objects [get_filesets sim_*]
 
 #seems to help surpress warning messages
+# TODO: Check if this should be updated for 4x4
 update_compile_order -fileset sources_1
 update_module_reference bd_fpga_axis_dot_20_10_0_0
 update_module_reference bd_fpga_axis_dot_40_20_0_0
