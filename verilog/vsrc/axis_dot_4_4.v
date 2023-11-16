@@ -13,7 +13,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 
-module axis_dot_20_10(
+module axis_dot_4_4(
 
 		// AXI4-Stream Interface
 		input                           aclk,
@@ -32,7 +32,7 @@ module axis_dot_20_10(
         input                           OUTPUT_AXIS_TREADY 
     );
     
-    dot_20_10 dot0 (
+    dot_4_4 dot0 (
     
 		// AXI4-Stream Interface
 		.clk(aclk),
