@@ -11,8 +11,10 @@ create_project -force vivado_project.xpr ${BASEDIR}/vivado_project -part xc7z020
 add_files ${SRCDIR}/axis_dot_80_40.v
 add_files ${SRCDIR}/axis_dot_40_20.v
 add_files ${SRCDIR}/axis_dot_20_10.v
+add_files ${SRCDIR}/axis_dot_4_4.v
 add_files ${SRCDIR}/accel_dot.sv
 add_files ${SRCDIR}/dot.sv
+add_files ${SRCDIR}/dot_4_4.sv
 add_files ${SRCDIR}/dot_20_10.sv
 add_files ${SRCDIR}/dot_40_20.sv
 add_files ${SRCDIR}/dot_80_40.sv
@@ -43,6 +45,10 @@ set_property top accel_dot_tb [get_filesets sim_accel_dot]
 create_fileset -simset sim_accel_dot_20_10
 add_files -fileset sim_accel_dot_20_10 ${TESTDIR}/accel_dot_20_10/accel_dot_20_10_tb.sv
 set_property top accel_dot_20_10_tb [get_filesets sim_accel_dot_20_10]
+
+create_fileset -simset sim_dot_4_4
+add_files -fileset sim_dot_4_4 ${TESTDIR}/dot_4_4/dot_4_4_tb.sv
+set_property top dot_4_4_tb [get_filesets sim_dot_4_4]
 
 create_fileset -simset sim_dot_20_10
 add_files -fileset sim_dot_20_10 ${TESTDIR}/dot_20_10/dot_20_10_tb.sv
