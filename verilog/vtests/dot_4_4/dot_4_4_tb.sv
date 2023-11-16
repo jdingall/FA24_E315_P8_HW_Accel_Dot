@@ -34,6 +34,8 @@ module dot_4_4_tb();
     wire                        OUTPUT_AXIS_TVALID;
     reg                         OUTPUT_AXIS_TREADY;
 
+    localparam ROWS = 4;
+    localparam COLS = 4;
 
     //used to access the FP tests table    
     bit [31:0] fp_hex;
@@ -215,7 +217,7 @@ module dot_4_4_tb();
             timeit(cycles);
         join                                                  
         
-        $display("@@@Passed in %d Cycles (was 2210)", cycles);
+        $display("@@@Passed in %d Cycles (was 181)", cycles);
         
         $finish;
 
