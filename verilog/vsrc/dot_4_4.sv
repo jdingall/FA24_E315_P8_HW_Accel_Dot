@@ -37,12 +37,12 @@ module dot_4_4(
 parameter ROWS = 4,
 parameter COLS = 4,
 
-parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = {
-	{$shortrealtobits(1.0),$shortrealtobits(2.0),$shortrealtobits(3.0),$shortrealtobits(4.0)},
-	{$shortrealtobits(5.0),$shortrealtobits(6.0),$shortrealtobits(7.0),$shortrealtobits(8.0)},
-	{$shortrealtobits(9.0),$shortrealtobits(10.0),$shortrealtobits(11.0),$shortrealtobits(12.0)},
-	{$shortrealtobits(13.0),$shortrealtobits(14.0),$shortrealtobits(15.0),$shortrealtobits(16.0)}
-}
+parameter [31:0] weights [0:ROWS-1] [0:COLS-1] = '{
+	'{$shortrealtobits(1.0),$shortrealtobits(2.0),$shortrealtobits(3.0),$shortrealtobits(4.0)},
+	'{$shortrealtobits(5.0),$shortrealtobits(6.0),$shortrealtobits(7.0),$shortrealtobits(8.0)},
+	'{$shortrealtobits(9.0),$shortrealtobits(10.0),$shortrealtobits(11.0),$shortrealtobits(12.0)},
+	'{$shortrealtobits(13.0),$shortrealtobits(14.0),$shortrealtobits(15.0),$shortrealtobits(16.0)}
+};
 
 
     accel_dot #(
