@@ -147,7 +147,7 @@ module dot_4_4_tb();
         for (i = 0; i < ROWS; ++i) begin
             inputs_table_lookup(i, fp_hex);
             $display( "Sending %h (%f)", fp_hex, $bitstoshortreal(fp_hex) ); 
-            send_word_axi4stream(fp_hex, i == 19);
+            send_word_axi4stream(fp_hex, i == 3);
         end                
               
         $display("Receiving Output Vector");
