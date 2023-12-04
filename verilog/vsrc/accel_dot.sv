@@ -61,7 +61,7 @@ module accel_dot #(
     //genvar i;
     //for (i = 0; i < ROWS/2; ++i) begin
     //    assign weights0[i] = weights[i*2];
-    //    assign weights0[i] = weights[i*2+1];
+    //    assign weights1[i] = weights[i*2+1];
     //end
     
     dot #(
